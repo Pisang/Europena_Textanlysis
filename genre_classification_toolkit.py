@@ -3,9 +3,6 @@ import sys
 
 from os import path
 
-# mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
-# mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
-
 mypath = ''
 
 
@@ -47,20 +44,3 @@ def serchGenresInMetadata():
         # print('\n' + str(i) + ' times one of the genres have been found in the metadata.')
 
         textfile_found_genres.close()
-
-
-################################################################# do stuff:
-
-# filterEnglishLines()
-
-translate_Metadata(0)
-# translateToEnglish()
-
-# print(translate_Google('schau ma mal ob das funktioniert'))
-
-# filterColumn('description')
-# filterColumn('format')
-# filterColumn('subject')
-# filterColumn('type')
-# filterColumn('creator')
-# filterColumn('contributor')

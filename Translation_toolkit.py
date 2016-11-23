@@ -12,10 +12,8 @@ from selenium import webdriver
 
 mypath = ''
 
-
 def __init__(self, mypath):
     self.mypath = mypath
-
 
 def filterEnglishLines():
     '''
@@ -44,14 +42,14 @@ def filterEnglishLines():
 def translateToEnglish():
     '''
     just translate the fiesls:
-    	- describtion
-	    - format
-	    - subject
-	    - type
-	    - if country == france : creator
-	and only translate the cells if there is english language in it.
+        - describtion
+        - format
+        - subject
+        - type
+        - if country == france : creator
+    and only translate the cells if there is english language in it.
     '''
-    translateText = open(path.join(mypath, '\testFile.txt'), 'w', encoding="UTF-8")
+    translateText = open(path.join(mypath, '/testFile.txt'), 'w', encoding="UTF-8")
     with open(path.join(mypath, 'metadata_to_translate.csv'), newline='',
               encoding="UTF-8") as metadata_csv:
         csv.field_size_limit(500 * 1024 * 1024)
@@ -109,11 +107,12 @@ def translateToEnglish():
 
 
 def translate_Metadata(skip_lines):
-    # with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-    # with open(path.join(mypath, 'metadata_translation.csv'),'TEST_translate.csv', 'r', newline='', encoding="UTF-8") as metadata:
+    with open(path.join(mypath, 'TEST_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'TEST_translate.csv'), 'r', newline='',
+                  encoding="UTF-8") as metadata:
 
-    with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-        with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+            # with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
+            # with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
             csv.field_size_limit(500 * 1024 * 1024)
             metadataReader = csv.reader(metadata, delimiter=';')
             metadataList = list(metadataReader)
@@ -155,7 +154,6 @@ def translate_Metadata(skip_lines):
                             translated_line = translate_Google(line)
 
                     translated_row.append(translated_line)
-
                 metadataWriter.writerow(translated_row)
 
 
@@ -195,6 +193,8 @@ def translate_Google(line):
         if (len(result_span) == 0):
             result_span = soup.find_all(id='result_box')
         translation = result_span[0].text
+        if (len(result_span) == 0):
+            print('didnt find the right box!')
     except Exception as e:
         print_exception(*sys.exc_info())
     finally:
