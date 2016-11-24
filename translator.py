@@ -1,13 +1,18 @@
 import Translation_toolkit
 
 # mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
+import preprocessor
+
 mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
 
-myTranslator = Translation_toolkit
-myTranslator.mypath = mypath
-myTranslator.translate_Metadata(2884)
+##### Translate
+#myTranslator = Translation_toolkit
+#myTranslator.mypath = mypath
+#myTranslator.translate_Metadata(2884)
 
-
+##### Preprocessing
+pp = preprocessor
+pp.__init__(pp, mypath)
 
 
 

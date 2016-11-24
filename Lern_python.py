@@ -62,6 +62,9 @@ def trainWord2Vec(mypath):
             for token in text:
                 frequency[token] += 1
 
+        outfile = open('D:/Dropbox/Dropbox_Uni/Europena/test_list.txt', 'w')
+        outfile.write('\n'.join(texts))
+
         texts = [[token for token in text if (frequency[token] > 1)] for text in texts]
 
     print('begin training ')

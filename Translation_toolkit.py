@@ -122,6 +122,7 @@ def translate_Metadata(skip_lines):
 
             # skip lines for running
             skipped_lines = 0
+            rowcount = 0
             for row in metadataList:
                 if skip_lines > skipped_lines:
                     skipped_lines += 1
@@ -132,6 +133,14 @@ def translate_Metadata(skip_lines):
                     metadataWriter.writerow(row)
                     skipfirstline = False
                     continue
+
+                # output percentage
+                rowcount += 1
+                percent = round(100 / len(metadataList) * rowcount, 2)
+                sys.stdout.write('\r')
+                sys.stdout.write('Translation in progress: ' + str(percent) + '%\n')
+                sys.stdout.flush()
+                ########################################
 
                 translated_row = []
                 for i in range(len(row)):
