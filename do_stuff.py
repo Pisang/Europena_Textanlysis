@@ -6,10 +6,9 @@ import Translation_toolkit
 import logging
 import gensim
 from os import path
-
-# mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
 import preprocessor
 
+# mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
 mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
 
 ##### Translate
