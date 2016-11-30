@@ -299,7 +299,7 @@ def redo_faulty_translation():
                     rowcount += 1
                     percent = round(100 / len(metadataList_faulty) * rowcount, 0)
                     sys.stdout.write('\r')
-                    sys.stdout.write('Translation in progress: ' + str(percent))
+                    sys.stdout.write('Translation in progress: ' + str(percent) + '%')
                     sys.stdout.flush()
                     ############################################################
 
@@ -318,4 +318,41 @@ def redo_faulty_translation():
                                     translated_line = translate_Google(row_original[cell_f])
                         translated_row.append(translated_line)
                     metadataWriter.writerow(translated_row)
+
+
+def merge_metadata():
+    with open(path.join(mypath, 'metadata_merged_test.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'metadata_translation_renewed_test.csv'), 'r', newline='', encoding="UTF-8") as metadata_renewed:
+            with open(path.join(mypath, 'metadata_test.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+
+                csv.field_size_limit(500 * 1024 * 1024)
+                metadataReader_renewed = csv.reader(metadata_renewed, delimiter=';')
+                metadata_renewed = list(metadataReader_renewed)
+
+                metadataReader = csv.reader(metadata, delimiter=';')
+                metadataList = list(metadataReader)
+
+                metadataWriter = csv.writer(writer, delimiter=';')
+
+                rowcount = 0
+
+                for row_original in metadataList:
+                    print(type(row_original))
+                    row = row_original
+
+                    ####################################### progress in percent
+                    rowcount += 1
+                    percent = round(100 / len(metadataList) * rowcount, 0)
+                    sys.stdout.write('\r')
+                    sys.stdout.write('Translation in progress: ' + str(percent) + '%')
+                    sys.stdout.flush()
+                    ############################################################
+
+                    count = 0
+                    for row_ren in metadata_renewed:
+                        if (row_original[0] == row_ren[0]):
+                            print('\n original ', row_original[0])
+                            print(' renewed  ', row_ren[0])
+                            row = row_ren
+                    metadataWriter.writerow(row)
 

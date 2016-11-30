@@ -14,7 +14,8 @@ mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
 ##### Translate
 myTranslator = Translation_toolkit
 myTranslator.mypath = mypath
-myTranslator.redo_faulty_translation()
+#myTranslator.redo_faulty_translation()
+myTranslator.merge_metadata()
 
 ##### Pre- processing
 # pp = preprocessor
