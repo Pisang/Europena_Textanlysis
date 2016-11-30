@@ -25,8 +25,6 @@ def trainWord2Vec(mypath):
         metadata.title) + " ").str.cat(metadata.description) + " ").str.cat(metadata.subject) + " ").str.cat(
         metadata.country).str.strip()).values
 
-    print(documents[2])
-
     tokenizer = RegexpTokenizer(r'\w+')
 
     texts = []

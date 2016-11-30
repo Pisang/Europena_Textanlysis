@@ -12,8 +12,10 @@ from selenium import webdriver
 
 mypath = ''
 
+
 def __init__(self, mypath):
     self.mypath = mypath
+
 
 def filterEnglishLines():
     '''
@@ -191,7 +193,7 @@ def translate_Google(line):
         # browser = webdriver.PhantomJS('C:/Program Files/phantomjs-2.1.1-windows/bin/phantomjs.exe')
 
         browser.get('http://translate.google.com/#auto/en/' + line)
-        time.sleep(1)
+        time.sleep(2)
 
         html_content = browser.page_source
         soup = BeautifulSoup(html_content, "html.parser")
@@ -268,3 +270,53 @@ def filterColumn(column_name):
             if (column_name == 'year'):
                 translateText.writelines(row[19] + '\n')
     translateText.close()
+
+
+def redo_faulty_translation():
+    '''
+    At the first iteration about 1.964 cells were translatet to "Wird übersetzt'. Probably because there was not enough
+    time for the translation to load. Therefore those lines are filtered out and translated a second time, where I extend
+    the time the browser waits for the translation to be complete manually.
+
+    :return:
+    '''
+    with open(path.join(mypath, 'metadata_translation_renewed.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'metadata_translation_0-18042_faulty.csv'), 'r', newline='', encoding="UTF-8") as metadata_faulty:
+            with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata_original:
+
+                csv.field_size_limit(500 * 1024 * 1024)
+                metadataReader_faulty = csv.reader(metadata_faulty, delimiter=';')
+                metadataList_faulty = list(metadataReader_faulty)
+
+                metadataReader_original = csv.reader(metadata_original, delimiter=';')
+                metadataList_original = list(metadataReader_original)
+
+                metadataWriter = csv.writer(writer, delimiter=';')
+
+                rowcount = 0
+                for row in metadataList_faulty:
+
+                    ####################################### progress in percent
+                    rowcount += 1
+                    percent = round(100 / len(metadataList_faulty) * rowcount, 0)
+                    sys.stdout.write('\r')
+                    sys.stdout.write('Translation in progress: ' + str(percent))
+                    sys.stdout.flush()
+                    ############################################################
+
+                    translated_row = []
+                    for cell_f in range(len(row)):
+                        line = row[cell_f]
+                        translated_line = line
+
+                        if (line == 'Wird übersetzt...'):
+                            line_id_faulty = row[0]
+
+                            for row_original in metadataList_original:
+
+                                line_id_original = row_original[0]
+                                if (line_id_original == line_id_faulty):
+                                    translated_line = translate_Google(row_original[cell_f])
+                        translated_row.append(translated_line)
+                    metadataWriter.writerow(translated_row)
+
