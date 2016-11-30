@@ -109,12 +109,11 @@ def translateToEnglish():
 
 
 def translate_Metadata(skip_lines):
-    with open(path.join(mypath, 'TEST_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-        with open(path.join(mypath, 'TEST_translate.csv'), 'r', newline='',
-                  encoding="UTF-8") as metadata:
+    # with open(path.join(mypath, 'TEST_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        # with open(path.join(mypath, 'TEST_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
 
-            # with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-            # with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+    with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
             csv.field_size_limit(500 * 1024 * 1024)
             metadataReader = csv.reader(metadata, delimiter=';')
             metadataList = list(metadataReader)
