@@ -76,21 +76,32 @@ def trainWord2Vec(mypath):
                 # normalize, remove accents and umlaute
                 word = unicodedata.normalize('NFKD', word).encode('ASCII', 'ignore')
                 valid_words.append(word)
+        texts.append(str(valid_words))
 
-        texts.append(valid_words)
-
-    # remove words that appear only once
-    frequency = defaultdict(int)
-    for text in texts:
-        for token in text:
-            frequency[token] += 1
-
-    texts = [[token for token in text if (frequency[token] > 1)] for text in texts]
-    texts = str(texts)
-    print(len(texts))
-
+    print(texts)
+    # texts should look like:    sentences = [['first', 'sentence'], ['second', 'sentence']]
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     model = gensim.models.Word2Vec(texts, size=1000, window=20, min_count=3, workers=4)
+    model.save(path.join(mypath + 'original_word2vec_model'))
+
+
+
+    # remove words that appear only once
+    # frequency = defaultdict(int)
+    # for text in texts:
+    #     for token in text:
+    #         frequency[token] += 1
+    #
+    # texts = [[token for token in text if (frequency[token] > 1)] for text in texts]
+    # texts = str(texts)
+
+
+
+
+    #print(texts)
+
+    #logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    # model = gensim.models.Word2Vec(texts, size=1000, window=20, min_count=3, workers=4)
     #model.build_vocab(texts)
     #model.train(texts)
 
@@ -98,7 +109,7 @@ def trainWord2Vec(mypath):
     #model.build_vocab(texts)  # can be a non-repeatable, 1-pass generator
     #model.train(texts)  # can be a non-repeatable, 1-pass generator
 
-    model.save(path.join(mypath + 'original_word2vec_model'))
+    # model.save(path.join(mypath + 'original_word2vec_model'))
 
 
 
