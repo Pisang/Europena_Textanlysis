@@ -1,50 +1,23 @@
-import pandas as pd
 import sys
 import unicodedata
-import logging
-
+from collections import defaultdict
 from os import path
 
-from gensim import models
-from nltk.tokenize import RegexpTokenizer
-from nltk.corpus import stopwords
+import gensim
+import logging
+import pandas as pd
 from gensim import corpora
-from collections import defaultdict
+from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 
-mypath = ''
-METADATA_FILE = ''
-metadata = ''
 
+def trainWord2Vec(mypath):
+    # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-def __init__(self, mypath):
-    self.mypath = mypath
     METADATA_FILE = path.join(mypath + 'metadata_merged.csv')
 
     # read csv-data (separated by semicolons)
-    self.metadata = pd.read_csv(METADATA_FILE, sep=";", encoding="utf-8")
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
-    preprocess(metadata)
-
-
-def remove_single_words(texts):
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-    logging.info('removing words that appear only once')
-
-    # remove words that appear only once
-    frequency = defaultdict(int)
-
-    for text in texts:
-        for token in text:
-            frequency[token] += 1
-
-    texts = [[token for token in text if (frequency[token] > 1)] for text in texts]
-    return texts
-
-
-def preprocess(metadata):
-    logging.info('starting preprocessing metadata')
+    metadata = pd.read_csv(METADATA_FILE, sep=";", encoding="utf-8")
 
     # convert nan-values to empty strings
     metadata = metadata.fillna("")
@@ -67,28 +40,22 @@ def preprocess(metadata):
         metadata.subject + " ").str.cat(metadata.type) + " ").str.cat(metadata.year) + " ").str.strip()).values
 
     stop_words = []
-
     stop_words.extend(get_stop_words('en'))
-    stop_words.extend(get_stop_words('de'))
-    stop_words.extend(get_stop_words('fr'))
-    stop_words.extend(get_stop_words('it'))
-    stop_words.extend(get_stop_words('pt'))
-    stop_words.extend(get_stop_words('ro'))
-    stop_words.extend(get_stop_words('spanish'))
-
     tokenizer = RegexpTokenizer(r'\w+')
 
-    texts = []
-    count = 1;
 
-    logging.info('starting tokenizing')
+    texts = []
+    count = 0;
 
     for document in documents:
 
         ####################################### progress in percent
         percent = round(100 / len(documents) * count, 2)
         sys.stdout.write('\r')
-        sys.stdout.write(str(percent) + '%')
+        if count == len(documents):
+            sys.stdout.write(str(percent) + '%\n')
+        else:
+            sys.stdout.write(str(percent) + '%')
         sys.stdout.flush()
         count += 1;
         ###########################################################
@@ -100,6 +67,9 @@ def preprocess(metadata):
 
             # for each lower-case transformed word
             for word in tokenizer.tokenize(document.lower()):
+                if word in stop_words:
+                    continue
+
                 # remove surrounding whitespace and line endings
                 word = word.strip()
 
@@ -108,21 +78,34 @@ def preprocess(metadata):
                 valid_words.append(word)
 
         texts.append(valid_words)
-    print('\n')
 
-    texts = remove_single_words(texts)
+    # remove words that appear only once
+    frequency = defaultdict(int)
+    for text in texts:
+        for token in text:
+            frequency[token] += 1
 
-    dictionary = corpora.Dictionary(texts)
-    dictionary.save(path.join(mypath + 'TEST_dictionary.dict'))
+    texts = [[token for token in text if (frequency[token] > 1)] for text in texts]
+    texts = str(texts)
+    print(len(texts))
 
-    corpus = [dictionary.doc2bow(text) for text in texts]
-    corpora.MmCorpus.serialize(path.join(mypath + 'corpus.mm'), corpus)
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    model = gensim.models.Word2Vec(texts, size=1000, window=20, min_count=3, workers=4)
+    #model.build_vocab(texts)
+    #model.train(texts)
 
-    tfidf = models.TfidfModel(corpus)
+    #model = gensim.models.Word2Vec(texts, min_count=10, workers=4)
+    #model.build_vocab(texts)  # can be a non-repeatable, 1-pass generator
+    #model.train(texts)  # can be a non-repeatable, 1-pass generator
+
+    model.save(path.join(mypath + 'original_word2vec_model'))
 
 
 
-    # outfile = open(path.join(mypath, 'test_list.txt'), 'w')
-    # outfile.write('\n'.join(texts))
-
-
+'''
+    print('begin training ')
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    model = gensim.models.Word2Vec(texts, size=100, window=10, min_count=5, workers=4)
+    model.save(path.join(mypath, 'metadata_100x10x5'))
+'''
+trainWord2Vec('D:/Dropbox/Dropbox_Uni/Europena/')

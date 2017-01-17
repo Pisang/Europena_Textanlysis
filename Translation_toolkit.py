@@ -106,6 +106,7 @@ def translateToEnglish():
             if (row[18] and language != 'en'):
                 # translate
                 translateText.write(row[18])
+    translateText.close()
 
 
 def translate_Metadata(skip_lines):
@@ -321,9 +322,9 @@ def redo_faulty_translation():
 
 
 def merge_metadata():
-    with open(path.join(mypath, 'metadata_merged_test.csv'), 'w', newline='', encoding="UTF-8") as writer:
-        with open(path.join(mypath, 'metadata_translation_renewed_test.csv'), 'r', newline='', encoding="UTF-8") as metadata_renewed:
-            with open(path.join(mypath, 'metadata_test.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+    with open(path.join(mypath, 'metadata_merged.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'metadata_translation_renewed.csv'), 'r', newline='', encoding="UTF-8") as metadata_renewed:
+            with open(path.join(mypath, 'metadata.csv'), 'r', newline='', encoding="UTF-8") as metadata:
 
                 csv.field_size_limit(500 * 1024 * 1024)
                 metadataReader_renewed = csv.reader(metadata_renewed, delimiter=';')
@@ -337,7 +338,6 @@ def merge_metadata():
                 rowcount = 0
 
                 for row_original in metadataList:
-                    print(type(row_original))
                     row = row_original
 
                     ####################################### progress in percent
@@ -351,8 +351,6 @@ def merge_metadata():
                     count = 0
                     for row_ren in metadata_renewed:
                         if (row_original[0] == row_ren[0]):
-                            print('\n original ', row_original[0])
-                            print(' renewed  ', row_ren[0])
                             row = row_ren
                     metadataWriter.writerow(row)
 
