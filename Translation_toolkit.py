@@ -198,7 +198,8 @@ def translate_Metadata(skip_lines):
                     #   not translated if they are mixed
                     if mode == 2:
                         translate_this_part = ''
-                        if (i == 15 or i == 17):
+                        language = detect(line)
+                        if ((i == 15 or i == 17) and language != 'en'):
                             if (line != ''):
                                 translated_line = translate_Google(line)
 
@@ -275,7 +276,7 @@ def translate_Google_greek(line):
         # browser = webdriver.PhantomJS('C:/Program Files/phantomjs-2.1.1-windows/bin/phantomjs.exe')
 
         browser.get('http://translate.google.com/#el/en/' + line)
-        time.sleep(10)
+        time.sleep(5)
 
         html_content = browser.page_source
         soup = BeautifulSoup(html_content, "html.parser")
@@ -436,7 +437,7 @@ def merge_metadata():
                     metadataWriter.writerow(row)
 
 
-# mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
-mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
+mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
+# mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
 
 translate_Metadata(0)
