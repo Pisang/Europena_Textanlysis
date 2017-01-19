@@ -4,11 +4,15 @@ import sys
 import unicodedata
 from collections import defaultdict
 from os import path
+from pprint import pprint
 
+import nltk
 import pandas as pd
 from gensim import corpora, models
 from nltk.tokenize import RegexpTokenizer
+from langdetect import detect
 from stop_words import get_stop_words
+from langdetect.lang_detect_exception import LangDetectException
 
 
 def remove_single_words(texts):
@@ -38,13 +42,13 @@ def loadDocument(mypath):
 
     # concatinate to string:
     #   - (id)
-    #   - contributor
-    #   - creator
+    #   - contributor (not translated)
+    #   - creator (only translated if country == france)
     #   - date
-    #   - describtion
+    #   - describtion - trans
     #   - spatial
-    #   - subject
-    #   - type
+    #   - subject - trans
+    #   - type - trans
     #   - year
     documents = ((((((((metadata.contributor + " ").str.cat(metadata.creator) + " ").str.cat(
         metadata.date) + " ").str.cat(metadata.description) + " ").str.cat(metadata.spatial) + " ").str.cat(
@@ -54,7 +58,36 @@ def loadDocument(mypath):
 
     stop_words = []
     stop_words.extend(get_stop_words('en'))
+    stop_words.extend(get_stop_words('en'))
+    stop_words.extend(get_stop_words('de'))
+    stop_words.extend(get_stop_words('fr'))
+    stop_words.extend(get_stop_words('it'))
+    stop_words.extend(get_stop_words('pt'))
+    stop_words.extend(get_stop_words('ro'))
+    stop_words.extend(get_stop_words('spanish'))
 
+    my_stopwords = '00 000 01 02 03 03t14 03t18 04 04bravicr 04volamih 04vollusm 04volverr 05 06 07 08 09 09t12 1 10 100 ' \
+                   '102 104 105 108 109 11 110 111 112 114 115 116 119 11942505816 11t11 12 120 12000 121 122 123 125 126 ' \
+                   '128 13 130 132 135 138 139 14 140 144 14429 14e 15 150 154 155 16 160 161294 162 163 166 168 16864 17 ' \
+                   '17085 173 176 17675 17796 17t12 18 180 183 184 189 18t12 19 190 191 192 193 194 195 198 19c 2 20 200 ' \
+                   '20206 204 21 215 21588 216 21672 22 22205 22389 22435 22917 22936 22t20 23 230 232 23277 235 23986 24 ' \
+                   '240 24808 25 250 252 257 26 264 27 271 27267 277 27t11 28 280 285 288 28t10 29 3 30 300 3000 30t11 31 ' \
+                   '318 31t13 32 32a 33 330 3373 3m2 34 340 35 35471 359998 36 360 36279 36706 37 3700 370a 37271 378345 38 ' \
+                   '38379 39 3o 4 40 400 4000 4060 40714 41 42 43 4300 4375309 439b 44 4445 45 450 46 463 4673 47 48 4814 ' \
+                   '486 49 492 49403 50 500 50496 50s 51 51a 52 520 52002709 527 53 530 53473 54 543 55 5506 56 57 571 58 ' \
+                   '58112 588 59 5r 60 600 61 610 62 620 63 64 65 6502 66 67 68 680 69 70 700 69th 70 700 71 72 72000 7278 ' \
+                   '73 74 75 75019 76 77 78 79 79108 7rl 80 800 81 82 83 84 844 84968 84bajimbs 84bonmala 84cucbrem ' \
+                   '84gracham 84lacpare 84lactrum 84merjour 84robamap 84routamg 84vitallm 84vitmoul 84vitolly 85 850222 ' \
+                   '86 865 86b 87 87981 88 885219 89 89147 89437 90 900 91 91344 92 93 94 94629 95 96 97 98 99 9bis a a1 ' \
+                   'a2 a7 aa aaa aaarr aacid aakjr aalge aasmund ab absolutely ac across actual actually ad06 add added ' \
+                   'adding adds afterwards ago agree agreed agrees ah ai aim al already also always another anymore anyone ' \
+                   'anything anywhere ap apr ar are arr atd ate au aui auk av ax ay b b1 b2 bab began begging begin begins ' \
+                   'begun behind besides beyond big bigger biggest bn bnf bni bo br iz eg cl11 cl50 cl5 can us mr unknown ' \
+                   'thirteen cd th are may unless otherwise tuesday january unlike dr almost although anymore anyone ' \
+                   'anything anywhere appropriate appropriately &quot &untitled &apos &amp &quot &lt &gt &nbsp &iexcl &cent ' \
+                   '&pound &curren &yen &brvbar &sect &uml &copy &ordf &laquo &not &shy &reg &macr &deg &plusmn &sup2 ' \
+                   '&sup3 tune(s) song(s) &lt;a href=&quot;http http wird übersetzt quot'.split()
+    stop_words.extend(my_stopwords)
     tokenizer = RegexpTokenizer(r'\w+')
 
     texts = []
@@ -69,7 +102,8 @@ def loadDocument(mypath):
         sys.stdout.write('\r')
         if count == len(documents):
             sys.stdout.write(str(percent) + '%\n')
-        else: sys.stdout.write(str(percent) + '%')
+        else:
+            sys.stdout.write(str(percent) + '%')
         sys.stdout.flush()
         count += 1;
         ###########################################################
@@ -81,13 +115,36 @@ def loadDocument(mypath):
 
             # for each lower-case transformed word
             for word in tokenizer.tokenize(document.lower()):
-                if word in stop_words:
+                if word in stop_words or (len(word) <= 1):
                     continue
                 # remove surrounding whitespace and line endings
                 word = word.strip()
 
+                # Grundformenreduktion
+                try:
+                    language = detect(word)
+                except LangDetectException:
+                    language = 'unknown'
+                if language == 'en':
+                    stemmer = nltk.stem.snowball.SnowballStemmer('english')
+                    word = stemmer.stem(str(word))
+                if language == 'de':
+                    stemmer = nltk.stem.snowball.SnowballStemmer('german')
+                    word = stemmer.stem(str(word))
+                if language == 'it':
+                    stemmer = nltk.stem.snowball.SnowballStemmer('italian')
+                    word = stemmer.stem(str(word))
+                if language == 'fr':
+                    stemmer = nltk.stem.snowball.SnowballStemmer('french')
+                    word = stemmer.stem(str(word))
+                if language == 'nl':
+                    stemmer = nltk.stem.snowball.SnowballStemmer('dutch')
+                    word = stemmer.stem(str(word))
+
+
                 # normalize, remove accents and umlaute
                 word = unicodedata.normalize('NFKD', word).encode('ASCII', 'ignore')
+
                 valid_words.append(word)
 
         texts.append(valid_words)
@@ -100,14 +157,12 @@ def loadDocument(mypath):
         path.join(mypath + 'tutorial/original_dictionary.dict'))  # store the dictionary, for future reference
     # print(dictionary)
     # Dictionary(71 unique tokens: ['comic', 'berlin', 'abraham', 'quot', 'romania']...)
-    print(dictionary.token2id)
+    # pprint(SortedDict(dictionary.token2id))
     # {'comic': 14, 'berlin': 58, 'abraham': 37, ...}
 
     corpus = [dictionary.doc2bow(text) for text in texts]
     corpora.MmCorpus.serialize(path.join(mypath + 'tutorial/original_corpus.mm'), corpus)
     # print(corpus)
-
-
 
 
 def tfIdf_transform(mypath):
@@ -136,6 +191,15 @@ def tfIdf_transform(mypath):
     # serialize the resulting corpus to disk first and continue using that.
     tfidf.save(path.join(mypath + "tutorial/original_tfidf.model"))
 
+    # print words and their tfidf- values
+    # corpus_tfidf = tfidf[corpus]
+    # d = {}
+    # for doc in corpus_tfidf:
+    #     for id, value in doc:
+    #         word = dictionary.get(id)
+    #         d[word] = value
+    # pprint(d)
+
 
 def lsi_transform(mypath):
     # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -148,16 +212,16 @@ def lsi_transform(mypath):
     else:
         print("Please run first tutorial to generate data set.")
 
-    lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=500)
+    lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=100)
 
     # create a double wrapper over the original corpus: bow->tfidf->fold-in-lsi
     # corpus_lsi = lsi[corpus_tfidf]
 
-    lsi.print_topics(500)
-
-
+    lsi.print_topics(num_topics=5, num_words=15)
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
-tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
-lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+#loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
+#tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+#lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+
+print(" ".join(nltk.stem.snowball.SnowballStemmer.languages))

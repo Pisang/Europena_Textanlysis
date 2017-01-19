@@ -67,7 +67,7 @@ def trainWord2Vec(mypath):
 
             # for each lower-case transformed word
             for word in tokenizer.tokenize(document.lower()):
-                if word in stop_words:
+                if word in stop_words or (len(word) <= 1):
                     continue
 
                 # remove surrounding whitespace and line endings
@@ -81,7 +81,7 @@ def trainWord2Vec(mypath):
     print(texts)
     # texts should look like:    sentences = [['first', 'sentence'], ['second', 'sentence']]
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-    model = gensim.models.Word2Vec(texts, size=1000, window=20, min_count=3, workers=4)
+    model = gensim.models.Word2Vec(texts, size=1000, window=5, min_count=2, workers=4)
     model.save(path.join(mypath + 'original_word2vec_model'))
 
 

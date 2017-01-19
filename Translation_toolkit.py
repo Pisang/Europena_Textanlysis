@@ -49,7 +49,7 @@ def translateToEnglish():
         - subject
         - type
         - if country == france : creator
-    and only translate the cells if there is english language in it.
+    and only translate the cells if there isn't already english language in it.
     '''
     translateText = open(path.join(mypath, '/testFile.txt'), 'w', encoding="UTF-8")
     with open(path.join(mypath, 'metadata_to_translate.csv'), newline='',
@@ -110,11 +110,36 @@ def translateToEnglish():
 
 
 def translate_Metadata(skip_lines):
-    # with open(path.join(mypath, 'TEST_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-        # with open(path.join(mypath, 'TEST_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+    '''
+    Translate the data. In the first run the following is translated:
+    - if dataProvider [5] == 'CNRS-MMSH' or 'Bibliothèque Nationale de France' or 'National Library of France' :
+      --> translate creator [4] and contributor [1]
+    - describtion [7],
+    - format [8],
+    - subject [16] and
+    - type [18]
 
-    with open(path.join(mypath, 'metadata_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
-        with open(path.join(mypath, 'metadata_to_translate.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+    but afterwards also
+    - title [17]
+    - spacial [15]
+    - some greek describtions mixed with english which have not been translation because languages are
+      not translated if they are mixed
+    should be translated. therefore a mode is introduced:
+
+    mode == 1  --> first run
+    mode == 2  --> second run
+
+    :param skip_lines:
+    :return:
+    '''
+
+    mode = 2
+
+    # with open(path.join(mypath, 'TEST_translation.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        # with open(path.join(mypath, 'TEST_translate1.csv'), 'r', newline='', encoding="UTF-8") as metadata:
+
+    with open(path.join(mypath, 'metadata_translation_v2.csv'), 'w', newline='', encoding="UTF-8") as writer:
+        with open(path.join(mypath, 'metadata_merged.csv'), 'r', newline='', encoding="UTF-8") as metadata:
             csv.field_size_limit(500 * 1024 * 1024)
             metadataReader = csv.reader(metadata, delimiter=';')
             metadataList = list(metadataReader)
@@ -122,7 +147,7 @@ def translate_Metadata(skip_lines):
             skipfirstline = True
             metadataWriter = csv.writer(writer, delimiter=';')
 
-            # skip lines for running
+            # skip lines for running working step by step
             skipped_lines = 0
             rowcount = 0
             for row in metadataList:
@@ -149,20 +174,51 @@ def translate_Metadata(skip_lines):
                     line = row[i]
                     translated_line = line
 
-                    # if dataProvider [5] == 'CNRS-MMSH' or 'Bibliothèque Nationale de France' or 'National Library of France' :
-                    # translate creator [4] and contributor [1]
-                    if (i == 1 and (row[5] == 'CNRS-MMSH' or row[5] == 'Bibliothèque Nationale de France' or row[
-                        5] == 'National Library of France')):
-                        if (line != ''):
-                            translated_line = translate_Google(line)
-                    if (i == 4 and (row[5] == 'CNRS-MMSH' or row[5] == 'Bibliothèque Nationale de France' or row[
-                        5] == 'National Library of France')):
-                        if (line != ''):
-                            translated_line = translate_Google(line)
-                    # translate describtion [7], format [8], subject [16] and type [18]
-                    if (i == 7 or i == 8 or i == 16 or i == 18):
-                        if (line != ''):
-                            translated_line = translate_Google(line)
+                    # first run translate several fields
+                    if mode == 1:
+                        # if dataProvider [5] == 'CNRS-MMSH' or 'Bibliothèque Nationale de France' or 'National Library of France' :
+                        # translate creator [4] and contributor [1]
+                        if (i == 1 and (row[5] == 'CNRS-MMSH' or row[5] == 'Bibliothèque Nationale de France' or row[
+                            5] == 'National Library of France')):
+                            if (line != ''):
+                                translated_line = translate_Google(line)
+                        if (i == 4 and (row[5] == 'CNRS-MMSH' or row[5] == 'Bibliothèque Nationale de France' or row[
+                            5] == 'National Library of France')):
+                            if (line != ''):
+                                translated_line = translate_Google(line)
+                        # translate describtion [7], format [8], subject [16] and type [18]
+                        if (i == 7 or i == 8 or i == 16 or i == 18):
+                            if (line != ''):
+                                translated_line = translate_Google(line)
+
+                    # for second run
+                    # - title [17] and
+                    # - spacial [15] is added
+                    # - some greek describtions mixed with english which have not been translation because languages are
+                    #   not translated if they are mixed
+                    if mode == 2:
+                        translate_this_part = ''
+                        if (i == 15 or i == 17):
+                            if (line != ''):
+                                translated_line = translate_Google(line)
+
+                        if (i == 7 and row[3] == 'greece'):
+                            words = line.split(' ')
+                            greekcount = 0
+                            for word_index in range(len(words)):
+                                testword = words[word_index]
+                                try:
+                                    language = detect(testword)
+                                except LangDetectException:
+                                    print('nothing to detect')
+                                if(language == 'el'):
+                                    greekcount = greekcount+1
+
+                            if greekcount > 2:
+                                print('greeks found!')
+                                translated_line = translate_Google_greek(line)
+
+                            print('line: ' + translated_line)
 
                     translated_row.append(translated_line)
                 metadataWriter.writerow(translated_row)
@@ -212,6 +268,31 @@ def translate_Google(line):
         browser.quit()
         return translation
 
+def translate_Google_greek(line):
+    translation = line
+    try:
+        browser = webdriver.Firefox()
+        # browser = webdriver.PhantomJS('C:/Program Files/phantomjs-2.1.1-windows/bin/phantomjs.exe')
+
+        browser.get('http://translate.google.com/#el/en/' + line)
+        time.sleep(10)
+
+        html_content = browser.page_source
+        soup = BeautifulSoup(html_content, "html.parser")
+        # soup = BeautifulSoup(html_content, "html5lib")
+
+        result_span = soup.find_all('span', class_='short_text')
+        # if text is longer, the result varies
+        if (len(result_span) == 0):
+            result_span = soup.find_all(id='result_box')
+        translation = result_span[0].text
+        if (len(result_span) == 0):
+            print('didnt find the right box!')
+    except Exception as e:
+        print_exception(*sys.exc_info())
+    finally:
+        browser.quit()
+        return translation
 
 def filterColumn(column_name):
     '''
@@ -354,3 +435,8 @@ def merge_metadata():
                             row = row_ren
                     metadataWriter.writerow(row)
 
+
+# mypath = 'C:/Users/glask/Dropbox/Dropbox_Uni/Europena/'
+mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
+
+translate_Metadata(0)

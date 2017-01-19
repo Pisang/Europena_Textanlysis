@@ -1,6 +1,9 @@
 from os import path
 
+import gensim
+import logging
 from gensim import corpora
+from gensim.models import Word2Vec
 
 
 def buildCorpus(mypath):
@@ -69,4 +72,20 @@ def buildCorpus(mypath):
     print(corpus)
 
 
-buildCorpus('D:/Dropbox/Dropbox_Uni/Europena/')
+
+
+def word2vec_tutorial(mypath):
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
+    sentences = [['first', 'sentence'], ['man', 'woman'], ['woman', 'king'], ['second', 'mozart'], ['man', 'hammer'], ['king', 'lion'], ['beard', 'penis'], ['test', 'asdf'], ['rewq', 'tzujk']]
+    model = gensim.models.Word2Vec(iter=1)  # an empty model, no training yet
+    model.build_vocab(sentences)  # can be a non-repeatable, 1-pass generator
+    model.train(sentences)  # can be a non-repeatable, 1-pass generator
+    model = Word2Vec(sentences, min_count=1, size=5, workers=1)  # default value is 5
+
+    model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1)
+    model.similarity('woman', 'man')
+
+
+#buildCorpus('D:/Dropbox/Dropbox_Uni/Europena/')
+word2vec_tutorial('D:/Dropbox/Dropbox_Uni/Europena/')
