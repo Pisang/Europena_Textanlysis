@@ -31,7 +31,9 @@ def remove_single_words(texts):
 
 
 def loadDocument(mypath):
-    METADATA_FILE = path.join(mypath + 'metadata_merged.csv')
+    # METADATA_FILE = path.join(mypath + 'metadata_merged.csv')
+    METADATA_FILE = path.join(mypath + 'metadata_translation_v2.csv')
+
     metadata = pd.read_csv(METADATA_FILE, sep=";", encoding="utf-8")
 
     # convert nan-values to empty strings
@@ -57,7 +59,6 @@ def loadDocument(mypath):
     # pprint(documents)
 
     stop_words = []
-    stop_words.extend(get_stop_words('en'))
     stop_words.extend(get_stop_words('en'))
     stop_words.extend(get_stop_words('de'))
     stop_words.extend(get_stop_words('fr'))
@@ -86,7 +87,7 @@ def loadDocument(mypath):
                    'thirteen cd th are may unless otherwise tuesday january unlike dr almost although anymore anyone ' \
                    'anything anywhere appropriate appropriately &quot &untitled &apos &amp &quot &lt &gt &nbsp &iexcl &cent ' \
                    '&pound &curren &yen &brvbar &sect &uml &copy &ordf &laquo &not &shy &reg &macr &deg &plusmn &sup2 ' \
-                   '&sup3 tune(s) song(s) &lt;a href=&quot;http http wird übersetzt quot'.split()
+                   '&sup3 tune(s) song(s) &lt;a href=&quot;http http wird übersetzt quot BNF'.split()
     stop_words.extend(my_stopwords)
     tokenizer = RegexpTokenizer(r'\w+')
 
@@ -141,7 +142,6 @@ def loadDocument(mypath):
                     stemmer = nltk.stem.snowball.SnowballStemmer('dutch')
                     word = stemmer.stem(str(word))
 
-
                 # normalize, remove accents and umlaute
                 word = unicodedata.normalize('NFKD', word).encode('ASCII', 'ignore')
 
@@ -155,7 +155,8 @@ def loadDocument(mypath):
     dictionary = corpora.Dictionary(texts)
     dictionary.save(
         path.join(mypath + 'tutorial/original_dictionary.dict'))  # store the dictionary, for future reference
-    # print(dictionary)
+
+    print(dictionary)
     # Dictionary(71 unique tokens: ['comic', 'berlin', 'abraham', 'quot', 'romania']...)
     # pprint(SortedDict(dictionary.token2id))
     # {'comic': 14, 'berlin': 58, 'abraham': 37, ...}
@@ -219,9 +220,29 @@ def lsi_transform(mypath):
 
     lsi.print_topics(num_topics=5, num_words=15)
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-#loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
-#tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
-#lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
 
-print(" ".join(nltk.stem.snowball.SnowballStemmer.languages))
+
+def count_languages(mypath):
+    dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
+    languages = {'en': 0, 'fr': 0, 'de': 0, 'it': 0, 'pt': 0, 'ro': 0, 'spanish': 0, 'da': 0, 'cs': 0, 'et': 0, 'no': 0}
+
+    for key, value in dictionary.items():
+        try:
+            language = detect(value)
+            languages[language] = languages[language] + 1
+            # if language == 'de': print(value)
+        except LangDetectException:
+            language = 'unknown'
+        except KeyError:
+            languages.update({language: 1})
+
+    print(languages)
+
+
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+# loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
+# tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+# lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+
+
+count_languages('D:/Dropbox/Dropbox_Uni/Europena/')

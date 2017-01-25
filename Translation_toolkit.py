@@ -198,7 +198,10 @@ def translate_Metadata(skip_lines):
                     #   not translated if they are mixed
                     if mode == 2:
                         translate_this_part = ''
-                        language = detect(line)
+                        try:
+                            language = detect(line)
+                        except LangDetectException:
+                            print('nothing to detect')
                         if ((i == 15 or i == 17) and language != 'en'):
                             if (line != ''):
                                 translated_line = translate_Google(line)
