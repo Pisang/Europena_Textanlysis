@@ -4,16 +4,21 @@ import sys
 import unicodedata
 from collections import defaultdict
 from os import path
-from pprint import pprint
 
 import nltk
+import numpy as np
 import pandas as pd
+from bs4 import BeautifulSoup
 from gensim import corpora, models
-from nltk.tokenize import RegexpTokenizer
 from langdetect import detect
-from stop_words import get_stop_words
 from langdetect.lang_detect_exception import LangDetectException
+from nltk.tokenize import RegexpTokenizer
+from sklearn import metrics
+from sklearn.cluster import DBSCAN
+from sklearn.feature_extraction.text import TfidfVectorizer
+from stop_words import get_stop_words
 
+wordlist = []
 
 def remove_single_words(texts):
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -66,6 +71,9 @@ def loadDocument(mypath):
     stop_words.extend(get_stop_words('pt'))
     stop_words.extend(get_stop_words('ro'))
     stop_words.extend(get_stop_words('spanish'))
+    soup = BeautifulSoup('html')
+    text = soup.get_text()
+    stop_words.extend(text)
 
     my_stopwords = '00 000 01 02 03 03t14 03t18 04 04bravicr 04volamih 04vollusm 04volverr 05 06 07 08 09 09t12 1 10 100 ' \
                    '102 104 105 108 109 11 110 111 112 114 115 116 119 11942505816 11t11 12 120 12000 121 122 123 125 126 ' \
@@ -152,6 +160,13 @@ def loadDocument(mypath):
 
     texts = remove_single_words(texts)
 
+    # make the texts accassible for all methods
+    wordlist = texts
+    text_file = open(path.join(mypath + "wordlist.txt", "w"))
+    for item in texts:
+        text_file.write("%s\n" % item)
+    text_file.close()
+
     dictionary = corpora.Dictionary(texts)
     dictionary.save(
         path.join(mypath + 'tutorial/original_dictionary.dict'))  # store the dictionary, for future reference
@@ -185,8 +200,11 @@ def tfIdf_transform(mypath):
     # corpus_tfidf is just a wrapper which converts a document if called - transforming the whole thing would contradict
     # gensim's objective of memory independence.
 
+    # doc_count = 0
     # for doc in corpus_tfidf:
-    # print(doc)
+    #    doc_count = doc_count + 1
+    #    print(doc)
+    # print(doc_count, ' documents are in TfIdf. ')
 
     # If you will be iterating over the transformed corpus_transformed multiple times, and the transformation is costly,
     # serialize the resulting corpus to disk first and continue using that.
@@ -200,7 +218,7 @@ def tfIdf_transform(mypath):
     #         word = dictionary.get(id)
     #         d[word] = value
     # pprint(d)
-
+    return tfidf
 
 def lsi_transform(mypath):
     # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -239,10 +257,55 @@ def count_languages(mypath):
     print(languages)
 
 
+def do_dbscan(X):
+    # X : array or sparse (CSR) matrix of shape (n_samples, n_features), or array of shape (n_samples, n_samples)
+    vectorizer = TfidfVectorizer(min_df=1)
+    X = vectorizer.fit_transform(X)
+
+    dbscan = DBSCAN(eps=0.3, min_samples=10).fit(X)
+    core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
+    core_samples_mask[dbscan.core_sample_indices_] = True
+    labels = dbscan.labels_
+
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+    print('Estimated number of clusters: %d' % n_clusters_)
+
+    print("Silhouette Coefficient: %0.3f"
+          % metrics.silhouette_score(X, labels))
+    ##############################################################################
+    # Plot result
+    import matplotlib.pyplot as plt
+
+    # Black removed and is used for noise instead.
+    unique_labels = set(labels)
+    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, col in zip(unique_labels, colors):
+        if k == -1:
+            # Black used for noise.
+            col = 'k'
+
+        class_member_mask = (labels == k)
+
+        xy = X[class_member_mask & core_samples_mask]
+        plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                 markeredgecolor='k', markersize=14)
+
+        xy = X[class_member_mask & ~core_samples_mask]
+        plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                 markeredgecolor='k', markersize=6)
+
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.show()
+
+
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-# loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
-# tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
-# lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
+tfidf = tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
 
+do_dbscan(wordlist)
 
-count_languages('D:/Dropbox/Dropbox_Uni/Europena/')
+#count_languages('D:/Dropbox/Dropbox_Uni/Europena/')
