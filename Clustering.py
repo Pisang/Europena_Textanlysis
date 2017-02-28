@@ -1,4 +1,5 @@
 import logging
+import os
 from os import path
 from pprint import pprint
 
@@ -9,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 import Process_tfidf_lsi
 
-mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
+# mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -63,12 +64,18 @@ def print_tfidf():
     pprint(d)
 
 
-with open(path.join(mypath, 'wordlist.txt'), 'r', encoding="UTF-8") as f:
-    texts = f.read().splitlines()
+dir = os.path.dirname(__file__)
+print(dir)
+filename = os.path.join(dir, 'mypath.txt')
 
-    # do_kMeans(texts, 6)
+with open(filename, 'r', encoding="UTF-8") as pathf:
+    mypath = pathf.readline()
+    with open(path.join(mypath, 'wordlist.txt'), 'r', encoding="UTF-8") as f:
+        texts = f.read().splitlines()
 
-    # print_tfidf()
+        # do_kMeans(texts, 6)
 
-    # text_ = Process_tfidf_lsi.remove_single_words(texts)
-    Process_tfidf_lsi.remove_unimportant_words(texts, mypath)
+        # print_tfidf()
+
+        # text_ = Process_tfidf_lsi.remove_single_words(texts)
+        Process_tfidf_lsi.remove_unimportant_words(texts, mypath)
