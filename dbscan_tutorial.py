@@ -7,6 +7,11 @@ Demo of DBSCAN clustering algorithm
 Finds core samples of high density and expands clusters from them.
 
 """
+
+from os import path
+
+from gensim import corpora
+
 print(__doc__)
 
 import numpy as np
@@ -17,11 +22,32 @@ from sklearn.preprocessing import StandardScaler
 
 ##############################################################################
 # Generate sample data
-centers = [[1, 1], [-1, -1], [10, 10]]
+centers = [[1, 1, 1], [-1, -1, -1], [1, 1, -1]]
 X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4,
                             random_state=0)
 
+# pprint(X)
+mypath = 'D:/Dropbox/Dropbox_Uni/Europena/'
+dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
+corpus_tfidf = corpora.MmCorpus(path.join(mypath + 'tutorial/original_corpus_tfidf.mm'))
+
+# print(corpus_tfidf)
+# print(type(corpus_tfidf))
+
+# print(X)
+# print(type(X))
+# for document in corpus_tfidf:
+#    for word in document:
+#        print(word)
+#    print('\n')
+
+# print(dictionary)
+# for keys,values in dictionary.items():
+#    print(values, ' : ', keys)
+
+# print(X)
 X = StandardScaler().fit_transform(X)
+#print(X)
 
 ##############################################################################
 # Compute DBSCAN

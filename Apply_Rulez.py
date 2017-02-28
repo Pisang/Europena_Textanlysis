@@ -1,7 +1,7 @@
-from os import path
 import csv
-
 import logging
+from os import path
+
 
 def apply_rulez(mypath):
 
@@ -27,7 +27,7 @@ def apply_rulez(mypath):
                     continue
 
                 for column in row:
-                    if ('mozart' in column.lower()):
+                    if ('mozart' in column.lower() or 'schubert, franz'):
                         genre = 'classical'
 
                     if ('testimony' in column.lower() and 'interview' in column.lower()):

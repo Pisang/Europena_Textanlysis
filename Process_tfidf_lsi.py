@@ -35,6 +35,54 @@ def remove_single_words(texts):
     return texts
 
 
+'''
+remove words which only appear in one document, but not in other documents
+'''
+
+
+def remove_unimportant_words(texts, mypath):
+    with open(path.join(mypath, 'wordlist_unimportant_words_removed.txt'), 'w', encoding="UTF-8") as wordlist_new:
+
+        logging.info('removing words which only appear in one document, but not in other documents')
+        text_ = []
+        linecount = 0
+
+        for line in texts:
+
+            ####################################### progress in percent
+            percent = round(100 / len(texts) * linecount, 2)
+            sys.stdout.write('\r')
+            if linecount == len(texts):
+                sys.stdout.write(str(percent) + '%\n')
+            else:
+                sys.stdout.write(str(percent) + '%')
+            sys.stdout.flush()
+            linecount += 1;
+            ###########################################################
+
+            newline = []
+            for word in line:
+                linecount_ = 0
+                testtext = ''
+                for line_ in texts:
+                    if linecount != linecount_:
+                        # if line_ is binary handle as binary, else as string
+                        if len(line_) == 8 and all(x in "01" for x in line_):
+                            testtext = testtext + b' '.join(line_).decode('utf-8')
+                        else:
+                            testtext = testtext + ' '.join(line_)
+                    linecount_ = linecount_ + 1
+                    testtext = testtext + ' '
+                # if word is binary decode it to string
+                if len(line_) == 8 and all(x in "01" for x in line_):
+                    word = word.decode('utf-8')
+                # print(word, '  IN  ', testtext)
+                if word in testtext.split(' '):
+                    newline.append(word)
+            wordlist_new.writelines(newline)
+
+            linecount = linecount + 1
+
 def loadDocument(mypath):
     # METADATA_FILE = path.join(mypath + 'metadata_merged.csv')
     METADATA_FILE = path.join(mypath + 'metadata_translation_v2.csv')
@@ -95,7 +143,8 @@ def loadDocument(mypath):
                    'thirteen cd th are may unless otherwise tuesday january unlike dr almost although anymore anyone ' \
                    'anything anywhere appropriate appropriately &quot &untitled &apos &amp &quot &lt &gt &nbsp &iexcl &cent ' \
                    '&pound &curren &yen &brvbar &sect &uml &copy &ordf &laquo &not &shy &reg &macr &deg &plusmn &sup2 ' \
-                   '&sup3 tune(s) song(s) &lt;a href=&quot;http http wird übersetzt quot BNF'.split()
+                   '&sup3 tune(s) song(s) &lt;a href=&quot;http http wird übersetzt quot BNF unk bingham spart hebrew nucelli svec' \
+                   'henebry kutchie ka hamills yanyor kavak hould fado clamper louys enzo angelillo yoshitomo kozlovskis '.split()
     stop_words.extend(my_stopwords)
     tokenizer = RegexpTokenizer(r'\w+')
 
@@ -124,54 +173,61 @@ def loadDocument(mypath):
 
             # for each lower-case transformed word
             for word in tokenizer.tokenize(document.lower()):
-                if word in stop_words or (len(word) <= 1):
-                    continue
-                # remove surrounding whitespace and line endings
-                word = word.strip()
 
-                # Grundformenreduktion
-                try:
-                    language = detect(word)
-                except LangDetectException:
-                    language = 'unknown'
-                if language == 'en':
-                    stemmer = nltk.stem.snowball.SnowballStemmer('english')
-                    word = stemmer.stem(str(word))
-                if language == 'de':
-                    stemmer = nltk.stem.snowball.SnowballStemmer('german')
-                    word = stemmer.stem(str(word))
-                if language == 'it':
-                    stemmer = nltk.stem.snowball.SnowballStemmer('italian')
-                    word = stemmer.stem(str(word))
-                if language == 'fr':
-                    stemmer = nltk.stem.snowball.SnowballStemmer('french')
-                    word = stemmer.stem(str(word))
-                if language == 'nl':
-                    stemmer = nltk.stem.snowball.SnowballStemmer('dutch')
-                    word = stemmer.stem(str(word))
+                # word must have more than one letter and must not be in the stop_word list
+                if not (word in stop_words or (len(word) <= 1)):
+                    # remove surrounding whitespace and line endings
+                    word = word.strip()
 
-                # normalize, remove accents and umlaute
-                word = unicodedata.normalize('NFKD', word).encode('ASCII', 'ignore')
+                    # Grundformenreduktion
+                    try:
+                        language = detect(word)
+                    except LangDetectException:
+                        language = 'unknown'
+                    if language == 'en':
+                        stemmer = nltk.stem.snowball.SnowballStemmer('english')
+                        word = stemmer.stem(str(word))
+                    if language == 'de':
+                        stemmer = nltk.stem.snowball.SnowballStemmer('german')
+                        word = stemmer.stem(str(word))
+                    if language == 'it':
+                        stemmer = nltk.stem.snowball.SnowballStemmer('italian')
+                        word = stemmer.stem(str(word))
+                    if language == 'fr':
+                        stemmer = nltk.stem.snowball.SnowballStemmer('french')
+                        word = stemmer.stem(str(word))
+                    if language == 'nl':
+                        stemmer = nltk.stem.snowball.SnowballStemmer('dutch')
+                        word = stemmer.stem(str(word))
 
-                valid_words.append(word)
+                    # normalize, remove accents and umlaute
+                    word = unicodedata.normalize('NFKD', word).encode('ASCII', 'ignore')
+
+                    valid_words.append(word)
 
         texts.append(valid_words)
     # end for document in documents
 
+    # print(texts)
     texts = remove_single_words(texts)
+    #texts = remove_unimportant_words(texts)
 
     # make the texts accassible for all methods
     wordlist = texts
-    text_file = open(path.join(mypath + "wordlist.txt", "w"))
-    for item in texts:
-        text_file.write("%s\n" % item)
+
+    # write texts to .txt file
+    text_file = open(path.join(mypath, 'wordlist.txt'), 'w', encoding="UTF-8")
+    for document in texts:
+        for word in document:
+            text_file.write(word.decode('utf-8') + ' ')
+        text_file.write('\n')
     text_file.close()
 
     dictionary = corpora.Dictionary(texts)
     dictionary.save(
         path.join(mypath + 'tutorial/original_dictionary.dict'))  # store the dictionary, for future reference
 
-    print(dictionary)
+    logging.info(dictionary)
     # Dictionary(71 unique tokens: ['comic', 'berlin', 'abraham', 'quot', 'romania']...)
     # pprint(SortedDict(dictionary.token2id))
     # {'comic': 14, 'berlin': 58, 'abraham': 37, ...}
@@ -186,9 +242,9 @@ def tfIdf_transform(mypath):
     if (os.path.exists(path.join(mypath + 'tutorial/original_dictionary.dict'))):
         dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
         corpus = corpora.MmCorpus(path.join(mypath + 'tutorial/original_corpus.mm'))
-        print("Used files generated from first tutorial.")
+        logging.info("Used files generated from first tutorial.")
     else:
-        print("Please run first tutorial to generate data set.")
+        logging.info("Please run first tutorial to generate data set.")
 
     # train the model by going through the supplied corpus once and computing document frequencies of all its features
     tfidf = models.TfidfModel(corpus)  # train the model
@@ -196,7 +252,7 @@ def tfIdf_transform(mypath):
     # From now on, tfidf is treated as a read-only object that can be used to convert any vector from the old representation
     # (bag-of-words integer counts) to the new representation (TfIdf real-valued weights)
     corpus_tfidf = tfidf[corpus]
-    corpora.MmCorpus.serialize(path.join(mypath + 'tutorial/corpus_tfidf.mm'), corpus)
+    corpora.MmCorpus.serialize(path.join(mypath + 'tutorial/original_corpus_tfidf.mm'), corpus_tfidf)
     # corpus_tfidf is just a wrapper which converts a document if called - transforming the whole thing would contradict
     # gensim's objective of memory independence.
 
@@ -208,7 +264,7 @@ def tfIdf_transform(mypath):
 
     # If you will be iterating over the transformed corpus_transformed multiple times, and the transformation is costly,
     # serialize the resulting corpus to disk first and continue using that.
-    tfidf.save(path.join(mypath + "tutorial/original_tfidf.model"))
+    tfidf.save(path.join(mypath + "tutorial/original_model_tfidf.model"))
 
     # print words and their tfidf- values
     # corpus_tfidf = tfidf[corpus]
@@ -226,7 +282,7 @@ def lsi_transform(mypath):
     print('\n### lsi transform ###\n')
     if (os.path.exists(path.join(mypath + 'tutorial/original_dictionary.dict'))):
         dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
-        corpus_tfidf = corpora.MmCorpus(path.join(mypath + 'tutorial/corpus_tfidf.mm'))
+        corpus_tfidf = corpora.MmCorpus(path.join(mypath + 'tutorial/original_corpus_tfidf.mm'))
         print("Used files generated from previous tutorial.")
     else:
         print("Please run first tutorial to generate data set.")
@@ -302,10 +358,10 @@ def do_dbscan(X):
 
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
-tfidf = tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
-lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+# loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
+# tfidf = tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+#lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
 
-do_dbscan(wordlist)
+#do_dbscan(wordlist)
 
 #count_languages('D:/Dropbox/Dropbox_Uni/Europena/')
