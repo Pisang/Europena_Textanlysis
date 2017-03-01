@@ -20,6 +20,7 @@ from stop_words import get_stop_words
 
 wordlist = []
 
+
 def remove_single_words(texts):
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     logging.info('removing words that appear only once')
@@ -41,48 +42,50 @@ remove words which only appear in one document, but not in other documents
 
 
 def remove_unimportant_words(texts, mypath):
-    with open(path.join(mypath, 'wordlist_unimportant_words_removed.txt'), 'w', encoding="UTF-8") as wordlist_new:
+    logging.info('removing words which only appear in one document, but not in other documents')
+    text_ = []
+    linecount = 0
 
-        logging.info('removing words which only appear in one document, but not in other documents')
-        text_ = []
-        linecount = 0
+    for line in texts:
 
-        for line in texts:
+        ####################################### progress
+        sys.stdout.write('\r')
+        sys.stdout.write('line: ' + str(linecount + 1))
+        sys.stdout.flush()
+        ###########################################################
 
-            ####################################### progress
-            sys.stdout.write('\r')
-            sys.stdout.write('line: ' + str(linecount + 1))
-            sys.stdout.flush()
-            ###########################################################
+        newline = []
+        for word in line.split(' '):
+            linecount_ = 0
+            testtext = ''
+            for line_ in texts:
+                if linecount != linecount_:
+                    # if line_ is binary handle as binary, else as string
+                    if len(line_) == 8 and all(x in "01" for x in line_):
+                        logging.info('converting binary to utf-8')
+                        testtext = testtext + b' '.join(line_).decode('utf-8')
+                    else:
+                        testtext = testtext + ''.join(line_)
+                linecount_ = linecount_ + 1
+                testtext = testtext + ' '
 
-            newline = []
-            for word in line.split(' '):
-                linecount_ = 0
-                testtext = ''
-                for line_ in texts:
-                    if linecount != linecount_:
-                        # if line_ is binary handle as binary, else as string
-                        if len(line_) == 8 and all(x in "01" for x in line_):
-                            logging.info('converting binary to utf-8')
-                            testtext = testtext + b' '.join(line_).decode('utf-8')
-                        else:
-                            testtext = testtext + ''.join(line_)
-                    linecount_ = linecount_ + 1
-                    testtext = testtext + ' '
+            # if word is binary decode it to string
+            if len(line_) == 8 and all(x in "01" for x in line_):
+                logging.info('converting binary to utf-8')
+                word = word.decode('utf-8')
+            # print(word, '  IN  ', testtext)
 
-                # if word is binary decode it to string
-                if len(line_) == 8 and all(x in "01" for x in line_):
-                    logging.info('converting binary to utf-8')
-                    word = word.decode('utf-8')
-                # print(word, '  IN  ', testtext)
+            if word in testtext.split(' '):
+                newline.append(word + ' ')
 
-                if word in testtext.split(' '):
-                    newline.append(word + ' ')
+        newline.append('\n')
+        with open(path.join(mypath, 'wordlist_unimportant_words_removed.txt'), 'a',
+                  encoding="UTF-8") as wordlist_new:
+            linestring = ''.join(newline)
+            wordlist_new.write(linestring)
 
-            newline.append('\n')
-            wordlist_new.writelines(newline)
+        linecount = linecount + 1
 
-            linecount = linecount + 1
 
 def loadDocument(mypath):
     # METADATA_FILE = path.join(mypath + 'metadata_merged.csv')
@@ -211,7 +214,7 @@ def loadDocument(mypath):
 
     # print(texts)
     texts = remove_single_words(texts)
-    #texts = remove_unimportant_words(texts)
+    # texts = remove_unimportant_words(texts)
 
     # make the texts accassible for all methods
     wordlist = texts
@@ -277,6 +280,7 @@ def tfIdf_transform(mypath):
     # pprint(d)
     return tfidf
 
+
 def lsi_transform(mypath):
     # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -294,7 +298,6 @@ def lsi_transform(mypath):
     # corpus_lsi = lsi[corpus_tfidf]
 
     lsi.print_topics(num_topics=5, num_words=15)
-
 
 
 def count_languages(mypath):
@@ -357,12 +360,11 @@ def do_dbscan(X):
     plt.show()
 
 
-
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 # loadDocument('D:/Dropbox/Dropbox_Uni/Europena/')
 # tfidf = tfIdf_transform('D:/Dropbox/Dropbox_Uni/Europena/')
-#lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
+# lsi_transform('D:/Dropbox/Dropbox_Uni/Europena/')
 
-#do_dbscan(wordlist)
+# do_dbscan(wordlist)
 
-#count_languages('D:/Dropbox/Dropbox_Uni/Europena/')
+# count_languages('D:/Dropbox/Dropbox_Uni/Europena/')
