@@ -1,7 +1,6 @@
+import logging
 from os import path
 
-import gensim
-import logging
 from gensim import corpora
 from gensim.models import Word2Vec
 
@@ -78,13 +77,19 @@ def word2vec_tutorial(mypath):
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     sentences = [['first', 'sentence'], ['man', 'woman'], ['woman', 'king'], ['second', 'mozart'], ['man', 'hammer'], ['king', 'lion'], ['beard', 'penis'], ['test', 'asdf'], ['rewq', 'tzujk']]
-    model = gensim.models.Word2Vec(iter=1)  # an empty model, no training yet
-    model.build_vocab(sentences)  # can be a non-repeatable, 1-pass generator
-    model.train(sentences)  # can be a non-repeatable, 1-pass generator
-    model = Word2Vec(sentences, min_count=1, size=5, workers=1)  # default value is 5
+    # model = gensim.models.Word2Vec(iter=10)  # an empty model, no training yet
 
-    model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1)
-    model.similarity('woman', 'man')
+    model = Word2Vec(sentences, min_count=1, size=5, workers=1)
+
+    vocab = list(model.vocab.keys())
+    print('vocab: ', vocab[:10])
+
+    # model.build_vocab(sentences)  # can be a non-repeatable, 1-pass generator
+    # model.train(sentences, min_count = 1)  # can be a non-repeatable, 1-pass generator
+    # model = Word2Vec(sentences, min_count=1, size=5, workers=1)  # default value is 5
+
+    print(model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1))
+    print(model.similarity('woman', 'man'))
 
 
 #buildCorpus('D:/Dropbox/Dropbox_Uni/Europena/')

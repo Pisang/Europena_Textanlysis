@@ -3,7 +3,9 @@ import os
 from os import path
 from pprint import pprint
 
+import gensim
 from gensim import corpora
+from gensim.models import Word2Vec
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -51,7 +53,7 @@ def do_kMeans(texts, k_cluster):
         print('Document ', "%02d" % (document + 1), ' : ', prediction[document], ' - ', texts[document])
 
 
-def print_tfidf():
+def print_tfidf(mypath):
     corpus_tfidf = corpora.MmCorpus(path.join(mypath + 'tutorial/original_corpus_tfidf.mm'))
     dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
 
@@ -64,12 +66,53 @@ def print_tfidf():
     pprint(d)
 
 
+def find_idf(mypath):
+    corpus_tfidf = corpora.MmCorpus(path.join(mypath + 'tutorial/original_corpus_tfidf.mm'))
+    dictionary = corpora.Dictionary.load(path.join(mypath + 'tutorial/original_dictionary.dict'))
+
+
+def word2vec_clustering(mypath):
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
+    with open(path.join(mypath, 'wordlist.txt'), 'r', encoding="UTF-8") as f:
+        # sentences = [['first', 'sentence'], ['man', 'woman'], ['woman', 'king'], ['second', 'mozart'], ['man', 'hammer'],
+        # ['king', 'lion'], ['beard', 'penis'], ['test', 'asdf'], ['rewq', 'tzujk']]
+
+
+        texts = f.read().splitlines()
+        lines = []
+        for line in texts:
+            lines.append(line.split(' '))
+
+        model = Word2Vec(lines, min_count=3, size=10, workers=4, window=20)
+
+        vocab = list(model.vocab.keys())
+        # print('vocab: ', vocab[:10])
+
+        model.save(path.join(mypath, 'tutorial/model_persistanceTest.mm'))
+        persistanceTest = gensim.models.Word2Vec.load(path.join(mypath, 'tutorial/model_persistanceTest.mm'))
+
+        # model.build_vocab(sentences)  # can be a non-repeatable, 1-pass generator
+        # model.train(sentences, min_count = 1)  # can be a non-repeatable, 1-pass generator
+        # model = Word2Vec(sentences, min_count=1, size=5, workers=1)  # default value is 5
+
+        # print('most_similar (postitive=[woman, king], negative=[man]: ', persistanceTest.most_similar(positive=['woman', 'king'], negative=['man'], topn=1))
+        # print('similarity woman and man: ', persistanceTest.similarity('woman', 'man'))
+        print('similarity wolfgang amadeus: ', persistanceTest.similarity('wolfgang', 'amadeus'))
+        print('\nSIMILARITY:   ', persistanceTest.similarity('amadeus', 'folclor'))
+        print('\nSIMILARITY:   ', persistanceTest.similarity('amadeus', 'classic'))
+
+
 dir = os.path.dirname(__file__)
 print(dir)
 filename = os.path.join(dir, 'mypath.txt')
 
 with open(filename, 'r', encoding="UTF-8") as pathf:
     mypath = pathf.readline()
+
+    #word2vec_clustering(mypath)
+
+
     with open(path.join(mypath, 'wordlist.txt'), 'r', encoding="UTF-8") as f:
         texts = f.read().splitlines()
 
@@ -79,3 +122,6 @@ with open(filename, 'r', encoding="UTF-8") as pathf:
 
         # text_ = Process_tfidf_lsi.remove_single_words(texts)
         Process_tfidf_lsi.remove_unimportant_words(texts, mypath)
+
+
+'''    '''

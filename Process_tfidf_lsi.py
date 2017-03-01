@@ -49,36 +49,37 @@ def remove_unimportant_words(texts, mypath):
 
         for line in texts:
 
-            ####################################### progress in percent
-            percent = round(100 / len(texts) * linecount, 2)
+            ####################################### progress
             sys.stdout.write('\r')
-            if linecount == len(texts):
-                sys.stdout.write(str(percent) + '%\n')
-            else:
-                sys.stdout.write(str(percent) + '%')
+            sys.stdout.write('line: ' + str(linecount + 1))
             sys.stdout.flush()
-            linecount += 1;
             ###########################################################
 
             newline = []
-            for word in line:
+            for word in line.split(' '):
                 linecount_ = 0
                 testtext = ''
                 for line_ in texts:
                     if linecount != linecount_:
                         # if line_ is binary handle as binary, else as string
                         if len(line_) == 8 and all(x in "01" for x in line_):
+                            logging.info('converting binary to utf-8')
                             testtext = testtext + b' '.join(line_).decode('utf-8')
                         else:
-                            testtext = testtext + ' '.join(line_)
+                            testtext = testtext + ''.join(line_)
                     linecount_ = linecount_ + 1
                     testtext = testtext + ' '
+
                 # if word is binary decode it to string
                 if len(line_) == 8 and all(x in "01" for x in line_):
+                    logging.info('converting binary to utf-8')
                     word = word.decode('utf-8')
                 # print(word, '  IN  ', testtext)
+
                 if word in testtext.split(' '):
-                    newline.append(word)
+                    newline.append(word + ' ')
+
+            newline.append('\n')
             wordlist_new.writelines(newline)
 
             linecount = linecount + 1
