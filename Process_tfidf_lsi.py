@@ -219,13 +219,13 @@ def loadDocument(mypath):
     # make the texts accassible for all methods
     wordlist = texts
 
-    # write texts to .txt file
-    text_file = open(path.join(mypath, 'wordlist.txt'), 'w', encoding="UTF-8")
-    for document in texts:
-        for word in document:
-            text_file.write(word.decode('utf-8') + ' ')
-        text_file.write('\n')
-    text_file.close()
+    ## write texts to .txt file
+    # text_file = open(path.join(mypath, 'wordlist.txt'), 'w', encoding="UTF-8")
+    # for document in texts:
+    #    for word in document:
+    #        text_file.write(word.decode('utf-8') + ' ')
+    #    text_file.write('\n')
+    # text_file.close()
 
     dictionary = corpora.Dictionary(texts)
     dictionary.save(
